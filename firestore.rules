@@ -1,0 +1,327 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // Global Safety Net (Default Deny)
+    // =========================================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // Hardened Global Helpers
+    // =========================================================================
+    function isValidId(id) {
+      return id is string
+        && id.size() >= 1
+        && id.size() <= 128
+        && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    // Zero-lookup bootstrapped owner check (safe for allow list queries)
+    function isBootstrappedAdmin() {
+      return isVerifiedUser()
+        && request.auth.token.email == 'ahmadauto4645@gmail.com';
+    }
+
+    // Full admin check for single-document operations
+    function isAdmin() {
+      return isBootstrappedAdmin()
+        || (
+          isVerifiedUser()
+          && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        );
+    }
+
+    function isValidCategory(cat) {
+      return cat is string
+        && cat.size() <= 30
+        && cat in [
+          'funny-cartoons',
+          'urdu-stories',
+          'educational-videos',
+          'bedtime-stories'
+        ];
+    }
+
+    function isValidSourceType(src) {
+      return src is string
+        && src.size() <= 16
+        && src in ['demo', 'youtube', 'vimeo', 'direct'];
+    }
+
+    function isValidLanguage(lang) {
+      return lang is string
+        && lang.size() <= 20
+        && lang in ['English', 'Urdu', 'Urdu & English'];
+    }
+
+    function isValidThumbnailUrl(url) {
+      return url is string
+        && url.size() >= 1
+        && url.size() <= 500
+        && url.matches('^(/src/assets/images/[a-zA-Z0-9_\\-\\.]+|https://.+)$');
+    }
+
+    function isValidVideoUrl(srcType, url) {
+      return url is string
+        && url.size() <= 500
+        && (
+          (srcType == 'demo' && url.size() == 0)
+          || (srcType != 'demo' && url.size() >= 8 && url.matches('^https://.+$'))
+        );
+    }
+
+    // =========================================================================
+    // Entity Validation Blueprints (Anti-Update-Gap)
+    // =========================================================================
+    function isValidVideo(data) {
+      return data.keys().hasAll([
+          'title',
+          'urduTitle',
+          'description',
+          'category',
+          'thumbnailUrl',
+          'videoSourceType',
+          'videoUrl',
+          'duration',
+          'ageRange',
+          'language',
+          'moralLesson',
+          'isFeatured',
+          'isPopular',
+          'isFunnyAnimal',
+          'isDemo',
+          'isPublished',
+          'rightsConfirmed',
+          'ownerUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'title',
+          'urduTitle',
+          'description',
+          'category',
+          'thumbnailUrl',
+          'videoSourceType',
+          'videoUrl',
+          'duration',
+          'ageRange',
+          'language',
+          'moralLesson',
+          'isFeatured',
+          'isPopular',
+          'isFunnyAnimal',
+          'isDemo',
+          'isPublished',
+          'rightsConfirmed',
+          'ownerUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 120
+        && data.urduTitle is string && data.urduTitle.size() <= 120
+        && data.description is string && data.description.size() >= 10 && data.description.size() <= 1200
+        && isValidCategory(data.category)
+        && isValidThumbnailUrl(data.thumbnailUrl)
+        && isValidSourceType(data.videoSourceType)
+        && isValidVideoUrl(data.videoSourceType, data.videoUrl)
+        && data.duration is string && data.duration.size() >= 2 && data.duration.size() <= 20
+        && data.ageRange is string && data.ageRange.size() >= 2 && data.ageRange.size() <= 30
+        && isValidLanguage(data.language)
+        && data.moralLesson is string && data.moralLesson.size() <= 240
+        && data.isFeatured is bool
+        && data.isPopular is bool
+        && data.isFunnyAnimal is bool
+        && data.isDemo is bool
+        && data.isPublished is bool
+        && data.rightsConfirmed is bool && data.rightsConfirmed == true
+        && isValidId(data.ownerUid)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidInquiry(data) {
+      return data.keys().hasAll([
+          'senderName',
+          'senderEmail',
+          'topic',
+          'message',
+          'isAdultConfirmed',
+          'status',
+          'ownerUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'senderName',
+          'senderEmail',
+          'topic',
+          'message',
+          'isAdultConfirmed',
+          'status',
+          'ownerUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.senderName is string && data.senderName.size() >= 2 && data.senderName.size() <= 80
+        && data.senderEmail is string && data.senderEmail.size() >= 5 && data.senderEmail.size() <= 120
+        && data.senderEmail.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && data.topic is string && data.topic.size() <= 40
+        && data.topic in [
+          'General Question',
+          'Content Feedback',
+          'Rights & Permissions',
+          'Privacy Inquiry'
+        ]
+        && data.message is string && data.message.size() >= 10 && data.message.size() <= 1000
+        && data.isAdultConfirmed is bool && data.isAdultConfirmed == true
+        && data.status is string && data.status.size() <= 16 && data.status in ['open', 'resolved']
+        && isValidId(data.ownerUid)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAdminProfile(data) {
+      return data.keys().hasAll(['email', 'role', 'createdAt'])
+        && data.keys().hasOnly(['email', 'role', 'createdAt'])
+        && data.email is string && data.email.size() >= 5 && data.email.size() <= 120
+        && data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && data.role is string && data.role.size() <= 16 && data.role == 'admin'
+        && data.createdAt is timestamp;
+    }
+
+    // =========================================================================
+    // Collection: /videos/{videoId}
+    // =========================================================================
+    match /videos/{videoId} {
+      allow get: if isValidId(videoId)
+        && (existing().isPublished == true || isAdmin());
+
+      // Cost-optimized list rule (no get/exists inside list)
+      allow list: if existing().isPublished == true || isBootstrappedAdmin();
+
+      allow create: if isVerifiedUser()
+        && isValidId(videoId)
+        && isValidVideo(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && isAdmin();
+
+      allow update: if isVerifiedUser()
+        && isValidId(videoId)
+        && isValidVideo(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isAdmin()
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'title',
+            'urduTitle',
+            'description',
+            'category',
+            'thumbnailUrl',
+            'videoSourceType',
+            'videoUrl',
+            'duration',
+            'ageRange',
+            'language',
+            'moralLesson',
+            'isFeatured',
+            'isPopular',
+            'isFunnyAnimal',
+            'isDemo',
+            'isPublished',
+            'rightsConfirmed',
+            'updatedAt'
+          ])
+        );
+
+      allow delete: if isVerifiedUser()
+        && isValidId(videoId)
+        && isAdmin();
+    }
+
+    // =========================================================================
+    // Collection: /inquiries/{inquiryId} (PII-Isolated Parent Messages)
+    // =========================================================================
+    match /inquiries/{inquiryId} {
+      allow get: if isVerifiedUser()
+        && isValidId(inquiryId)
+        && (existing().ownerUid == request.auth.uid || isAdmin());
+
+      // Cost-optimized list rule (no get/exists inside list)
+      allow list: if isVerifiedUser()
+        && (existing().ownerUid == request.auth.uid || isBootstrappedAdmin());
+
+      allow create: if isVerifiedUser()
+        && isValidId(inquiryId)
+        && isValidInquiry(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().status == 'open'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedUser()
+        && isValidId(inquiryId)
+        && isValidInquiry(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin()
+          && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+        );
+
+      allow delete: if isVerifiedUser()
+        && isValidId(inquiryId)
+        && isAdmin();
+    }
+
+    // =========================================================================
+    // Collection: /admins/{adminUid}
+    // =========================================================================
+    match /admins/{adminUid} {
+      allow get: if isVerifiedUser()
+        && isValidId(adminUid)
+        && (request.auth.uid == adminUid || isBootstrappedAdmin());
+
+      allow list: if isBootstrappedAdmin();
+
+      allow create: if isBootstrappedAdmin()
+        && isValidId(adminUid)
+        && isValidAdminProfile(incoming())
+        && incoming().createdAt == request.time;
+
+      allow update: if isBootstrappedAdmin()
+        && isValidId(adminUid)
+        && isValidAdminProfile(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'role']);
+
+      allow delete: if isBootstrappedAdmin()
+        && isValidId(adminUid);
+    }
+  }
+}

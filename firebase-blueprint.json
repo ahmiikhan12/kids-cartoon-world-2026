@@ -1,0 +1,279 @@
+{
+  "entities": {
+    "Video": {
+      "title": "Video",
+      "description": "A family-safe cartoon, educational video, Urdu moral story, or bedtime tale managed by the website owner.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Primary title of the cartoon or story."
+        },
+        "urduTitle": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 120,
+          "description": "Optional Urdu script subtitle or story name."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 1200,
+          "description": "Child-friendly summary of the video or story."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "funny-cartoons",
+            "urdu-stories",
+            "educational-videos",
+            "bedtime-stories"
+          ],
+          "description": "Primary content category."
+        },
+        "thumbnailUrl": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "pattern": "^(/src/assets/images/[a-zA-Z0-9_\\-\\.]+|https://.+)$",
+          "description": "Local generated sample artwork path or authorized HTTPS thumbnail URL."
+        },
+        "videoSourceType": {
+          "type": "string",
+          "enum": [
+            "demo",
+            "youtube",
+            "vimeo",
+            "direct"
+          ],
+          "description": "Type of authorized video playback source."
+        },
+        "videoUrl": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 500,
+          "description": "Authorized YouTube, Vimeo, or direct video URL. Empty string for built-in demo storybook videos."
+        },
+        "duration": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 20,
+          "description": "Display duration such as 3:45 or 5 min."
+        },
+        "ageRange": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 30,
+          "description": "Recommended family age range such as Ages 3-7."
+        },
+        "language": {
+          "type": "string",
+          "enum": [
+            "English",
+            "Urdu",
+            "Urdu & English"
+          ],
+          "description": "Primary language of the video."
+        },
+        "moralLesson": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 240,
+          "description": "Optional positive takeaway or moral lesson."
+        },
+        "isFeatured": {
+          "type": "boolean",
+          "description": "Whether this video is highlighted in the Home page hero."
+        },
+        "isPopular": {
+          "type": "boolean",
+          "description": "Whether this video appears in the Popular Cartoons shelf."
+        },
+        "isFunnyAnimal": {
+          "type": "boolean",
+          "description": "Whether this video appears in the Funny Animal Cartoons shelf."
+        },
+        "isDemo": {
+          "type": "boolean",
+          "description": "Explicitly marks clearly labeled sample demo content."
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Controls public visibility to visitors."
+        },
+        "rightsConfirmed": {
+          "type": "boolean",
+          "description": "Owner confirmation that they own or have permission to embed this video."
+        },
+        "ownerUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase UID of the owner who created this record."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when last updated."
+        }
+      },
+      "required": [
+        "title",
+        "urduTitle",
+        "description",
+        "category",
+        "thumbnailUrl",
+        "videoSourceType",
+        "videoUrl",
+        "duration",
+        "ageRange",
+        "language",
+        "moralLesson",
+        "isFeatured",
+        "isPopular",
+        "isFunnyAnimal",
+        "isDemo",
+        "isPublished",
+        "rightsConfirmed",
+        "ownerUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ParentInquiry": {
+      "title": "ParentInquiry",
+      "description": "Minimal contact message submitted by a verified adult parent or guardian; strictly readable only by the website owner.",
+      "type": "object",
+      "properties": {
+        "senderName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Parent or guardian name."
+        },
+        "senderEmail": {
+          "type": "string",
+          "format": "email",
+          "minLength": 5,
+          "maxLength": 120,
+          "description": "Parent or guardian contact email."
+        },
+        "topic": {
+          "type": "string",
+          "enum": [
+            "General Question",
+            "Content Feedback",
+            "Rights & Permissions",
+            "Privacy Inquiry"
+          ],
+          "description": "Category of the parent inquiry."
+        },
+        "message": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 1000,
+          "description": "Message body."
+        },
+        "isAdultConfirmed": {
+          "type": "boolean",
+          "description": "Confirmation that the sender is a parent or guardian (18+)."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "resolved"
+          ],
+          "description": "Admin review status."
+        },
+        "ownerUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase UID of the authenticated parent sender."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when submitted."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when last updated."
+        }
+      },
+      "required": [
+        "senderName",
+        "senderEmail",
+        "topic",
+        "message",
+        "isAdultConfirmed",
+        "status",
+        "ownerUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AdminProfile": {
+      "title": "AdminProfile",
+      "description": "Authorized website administrator record managed exclusively by the bootstrapped owner.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 5,
+          "maxLength": 120,
+          "description": "Verified administrator email."
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "admin"
+          ],
+          "description": "Administrator role."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when granted."
+        }
+      },
+      "required": [
+        "email",
+        "role",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/videos/{videoId}": {
+      "schema": {
+        "$ref": "#/entities/Video"
+      },
+      "description": "Catalog of family-safe cartoons and stories. Published videos are readable by visitors; only the verified website owner/admin can create, edit, or delete videos."
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": {
+        "$ref": "#/entities/ParentInquiry"
+      },
+      "description": "Parent and guardian contact messages. Isolated PII collection readable only by the website owner or the authenticated sender."
+    },
+    "/admins/{adminUid}": {
+      "schema": {
+        "$ref": "#/entities/AdminProfile"
+      },
+      "description": "Registry of authorized administrators. Strictly controlled by the bootstrapped website owner."
+    }
+  }
+}

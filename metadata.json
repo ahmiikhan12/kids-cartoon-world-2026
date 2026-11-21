@@ -1,0 +1,6 @@
+{
+  "name": "Kids Cartoon World",
+  "description": "A colorful, safe, mobile-friendly children's cartoon and storytelling website featuring funny animal cartoons, Urdu moral stories, educational videos, and bedtime tales.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
